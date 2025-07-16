@@ -23,44 +23,25 @@ import { toast } from 'sonner';
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, toggleWishlist, isInWishlist } = useAuth();
+  const { isAuthenticated, toggleWishlist, isInWishlist, events } = useAuth();
   const isWishlisted = isInWishlist(id || '');
 
-  // Mock event data - in real app, fetch from API
-  const event = {
-    id: id || '1',
-    title: 'Summer Music Festival 2024',
-    description: 'Join us for an unforgettable night of music with top artists from around the world. This festival brings together diverse musical genres and creates an atmosphere of pure joy and celebration. Experience live performances, food trucks, art installations, and connect with fellow music lovers.',
-    fullDescription: 'The Summer Music Festival 2024 is our biggest event yet, featuring over 20 artists across 3 stages. From indie rock to electronic dance music, jazz to hip-hop, there\'s something for everyone. The festival grounds will feature local food vendors, craft beer gardens, art installations from local artists, and interactive experiences. Come early to explore everything we have to offer!',
-    date: '2024-08-15',
-    time: '18:00',
-    endTime: '23:00',
-    location: 'Central Park, New York',
-    address: '123 Park Avenue, New York, NY 10001',
-    price: 89,
-    image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800',
-    category: 'Music',
-    attendees: 1250,
-    maxAttendees: 2000,
-    organizer: {
-      name: 'Music Events Co.',
-      email: 'info@musicevents.com',
-      phone: '+1 (555) 123-4567',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'
-    },
-    ticketTypes: [
-      { id: '1', name: 'General Admission', price: 89, description: 'Access to all stages and festival grounds' },
-      { id: '2', name: 'VIP Pass', price: 199, description: 'Includes VIP area, complimentary drinks, and meet & greet' },
-      { id: '3', name: 'Early Bird', price: 69, description: 'Limited time offer - save $20!', available: false }
-    ],
-    highlights: [
-      '20+ Artists performing across 3 stages',
-      'Local food vendors and craft beer',
-      'Art installations and interactive experiences',
-      'Free parking and shuttle service',
-      'Family-friendly activities'
-    ]
-  };
+  // Find the event from context
+  const event = events.find(e => e.id === id);
+
+  if (!event) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Event not found</h1>
+            <Button onClick={() => navigate('/')}>Back to Events</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleWishlist = () => {
     if (!isAuthenticated) {
@@ -99,6 +80,12 @@ const EventDetails = () => {
       navigate('/login');
       return;
     }
+    
+    if (event.status === 'sold-out' || event.attendees >= event.maxAttendees) {
+      toast.error('This event is sold out');
+      return;
+    }
+    
     navigate(`/book/${id}`);
   };
 
@@ -111,6 +98,8 @@ const EventDetails = () => {
       day: 'numeric',
     });
   };
+
+  const isSoldOut = event.status === 'sold-out' || event.attendees >= event.maxAttendees;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -177,7 +166,7 @@ const EventDetails = () => {
                   <Calendar className="h-5 w-5 mr-3 text-blue-600" />
                   <div>
                     <p className="font-medium text-gray-900">{formatDate(event.date)}</p>
-                    <p className="text-sm">{event.time} - {event.endTime}</p>
+                    <p className="text-sm">{event.time}</p>
                   </div>
                 </div>
 
@@ -185,7 +174,6 @@ const EventDetails = () => {
                   <MapPin className="h-5 w-5 mr-3 text-blue-600" />
                   <div>
                     <p className="font-medium text-gray-900">{event.location}</p>
-                    <p className="text-sm">{event.address}</p>
                   </div>
                 </div>
 
@@ -203,66 +191,11 @@ const EventDetails = () => {
                   <User className="h-5 w-5 mr-3 text-blue-600" />
                   <div>
                     <p className="font-medium text-gray-900">Organized by</p>
-                    <p className="text-sm">{event.organizer.name}</p>
+                    <p className="text-sm">{event.organizer}</p>
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* Full Description */}
-            <Card>
-              <CardHeader>
-                <CardTitle>About This Event</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 leading-relaxed mb-4">
-                  {event.fullDescription}
-                </p>
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Event Highlights:</h4>
-                  <ul className="list-disc list-inside space-y-1 text-gray-600">
-                    {event.highlights.map((highlight, index) => (
-                      <li key={index}>{highlight}</li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Organizer Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Organizer</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-start space-x-4">
-                  <img
-                    src={event.organizer.avatar}
-                    alt={event.organizer.name}
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-gray-900">
-                      {event.organizer.name}
-                    </h3>
-                    <div className="space-y-2 mt-2">
-                      <div className="flex items-center text-gray-600">
-                        <Mail className="h-4 w-4 mr-2" />
-                        <a href={`mailto:${event.organizer.email}`} className="hover:text-blue-600">
-                          {event.organizer.email}
-                        </a>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Phone className="h-4 w-4 mr-2" />
-                        <a href={`tel:${event.organizer.phone}`} className="hover:text-blue-600">
-                          {event.organizer.phone}
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Booking Sidebar */}
@@ -272,37 +205,25 @@ const EventDetails = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>Book Tickets</span>
-                    <Badge variant="outline">{event.maxAttendees - event.attendees} left</Badge>
+                    <Badge variant="outline" className={isSoldOut ? 'text-red-600' : ''}>
+                      {isSoldOut ? 'Sold Out' : `${event.maxAttendees - event.attendees} left`}
+                    </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Ticket Types */}
-                  <div className="space-y-3">
-                    {event.ticketTypes.map((ticket) => (
-                      <div
-                        key={ticket.id}
-                        className={`border rounded-lg p-4 ${
-                          ticket.available === false
-                            ? 'border-gray-200 bg-gray-50 opacity-60'
-                            : 'border-gray-200 hover:border-blue-300 cursor-pointer'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold text-gray-900">{ticket.name}</h4>
-                          <span className="text-lg font-bold text-blue-600">
-                            ${ticket.price}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600">{ticket.description}</p>
-                        {ticket.available === false && (
-                          <p className="text-sm text-red-500 mt-1">Sold Out</p>
-                        )}
-                      </div>
-                    ))}
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600 mb-2">
+                      ${event.price}
+                    </div>
+                    <p className="text-sm text-gray-600">per ticket</p>
                   </div>
 
-                  <Button onClick={handleBookNow} className="w-full py-6 text-lg">
-                    Book Now
+                  <Button 
+                    onClick={handleBookNow} 
+                    className="w-full py-6 text-lg"
+                    disabled={isSoldOut}
+                  >
+                    {isSoldOut ? 'Sold Out' : 'Book Now'}
                   </Button>
 
                   <p className="text-xs text-gray-500 text-center">

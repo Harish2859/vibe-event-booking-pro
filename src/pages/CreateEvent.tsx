@@ -8,9 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const CreateEvent = () => {
   const navigate = useNavigate();
+  const { createEvent } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -25,19 +28,46 @@ const CreateEvent = () => {
   });
 
   const categories = [
-    'Music', 'Comedy', 'Workshop', 'Conference', 'Sports', 'Food & Drink', 
-    'Arts & Culture', 'Technology', 'Business', 'Health & Wellness'
+    'Music', 'Comedy', 'Conference', 'Art', 'Sports', 'Food & Drink', 
+    'Technology', 'Business', 'Health & Wellness', 'Education'
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setLoading(false);
-    navigate('/organizer/events');
+    try {
+      // Validate form
+      if (!formData.title || !formData.description || !formData.category || 
+          !formData.date || !formData.time || !formData.location || 
+          !formData.price || !formData.maxAttendees) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      const eventData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        date: formData.date,
+        time: formData.time,
+        location: formData.location,
+        price: parseFloat(formData.price),
+        maxAttendees: parseInt(formData.maxAttendees),
+        image: formData.image || 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500'
+      };
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      createEvent(eventData);
+      toast.success('Event created successfully!');
+      navigate('/organizer/events');
+    } catch (error) {
+      toast.error('Failed to create event');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -79,7 +109,7 @@ const CreateEvent = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
-                        <SelectItem key={category} value={category.toLowerCase()}>
+                        <SelectItem key={category} value={category}>
                           {category}
                         </SelectItem>
                       ))}

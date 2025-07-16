@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { EventCard } from '@/components/EventCard';
@@ -12,65 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search, Filter, Calendar, Music, Mic, BookOpen, Palette } from 'lucide-react';
-
-const mockEvents = [
-  {
-    id: '1',
-    title: 'Summer Music Festival 2024',
-    description: 'Join us for an unforgettable night of music with top artists from around the world.',
-    date: '2024-08-15',
-    time: '18:00',
-    location: 'Central Park, New York',
-    price: 89,
-    image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=500',
-    category: 'Music',
-    attendees: 1250,
-    maxAttendees: 2000,
-    organizer: 'Music Events Co.'
-  },
-  {
-    id: '2',
-    title: 'Tech Innovation Conference',
-    description: 'Discover the latest trends in technology and connect with industry leaders.',
-    date: '2024-08-20',
-    time: '09:00',
-    location: 'Convention Center, San Francisco',
-    price: 199,
-    image: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=500',
-    category: 'Conference',
-    attendees: 850,
-    maxAttendees: 1000,
-    organizer: 'TechEvents Inc.'
-  },
-  {
-    id: '3',
-    title: 'Comedy Night Special',
-    description: 'Laugh until your sides hurt with our lineup of incredible comedians.',
-    date: '2024-08-12',
-    time: '20:00',
-    location: 'Comedy Club Downtown',
-    price: 45,
-    image: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=500',
-    category: 'Comedy',
-    attendees: 120,
-    maxAttendees: 150,
-    organizer: 'Laugh Factory'
-  },
-  {
-    id: '4',
-    title: 'Art Gallery Opening',
-    description: 'Experience contemporary art from emerging local artists in an intimate setting.',
-    date: '2024-08-18',
-    time: '19:00',
-    location: 'Modern Art Gallery',
-    price: 25,
-    image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=500',
-    category: 'Art',
-    attendees: 80,
-    maxAttendees: 200,
-    organizer: 'Gallery Events'
-  }
-];
+import { useAuth } from '@/contexts/AuthContext';
 
 const categories = [
   { name: 'All', icon: Calendar },
@@ -81,19 +24,10 @@ const categories = [
 ];
 
 const Index = () => {
-  const [events, setEvents] = useState(mockEvents);
+  const { events } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceFilter, setPriceFilter] = useState('all');
-  const [wishlistedEvents, setWishlistedEvents] = useState<string[]>([]);
-
-  const handleWishlist = (eventId: string) => {
-    setWishlistedEvents(prev => 
-      prev.includes(eventId) 
-        ? prev.filter(id => id !== eventId)
-        : [...prev, eventId]
-    );
-  };
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -193,7 +127,20 @@ const Index = () => {
             {filteredEvents.map((event) => (
               <EventCard
                 key={event.id}
-                event={event}
+                event={{
+                  id: event.id,
+                  title: event.title,
+                  description: event.description,
+                  date: event.date,
+                  time: event.time,
+                  location: event.location,
+                  price: event.price,
+                  image: event.image,
+                  category: event.category,
+                  attendees: event.attendees,
+                  maxAttendees: event.maxAttendees,
+                  organizer: event.organizer
+                }}
               />
             ))}
           </div>

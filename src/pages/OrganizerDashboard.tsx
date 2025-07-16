@@ -4,39 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { PlusCircle, Calendar, Users, DollarSign, TrendingUp } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const OrganizerDashboard = () => {
-  // Mock data - in real app, fetch from API
-  const stats = {
-    totalEvents: 12,
-    totalTicketsSold: 1247,
-    totalEarnings: 45680,
-    activeEvents: 8
-  };
+  const { user, events, getOrganizerStats } = useAuth();
+  const stats = getOrganizerStats();
 
-  const recentEvents = [
-    {
-      id: '1',
-      title: 'Summer Music Festival',
-      date: '2024-08-15',
-      ticketsSold: 250,
-      earnings: 18750
-    },
-    {
-      id: '2',
-      title: 'Tech Conference 2024',
-      date: '2024-09-20',
-      ticketsSold: 180,
-      earnings: 9000
-    },
-    {
-      id: '3',
-      title: 'Food & Wine Expo',
-      date: '2024-10-05',
-      ticketsSold: 320,
-      earnings: 12800
-    }
-  ];
+  // Get organizer's events
+  const organizerEvents = events.filter(event => event.organizerId === user?.id);
+  const recentEvents = organizerEvents.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -112,7 +88,7 @@ const OrganizerDashboard = () => {
                     <p className="text-sm text-gray-600">{event.date}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{event.ticketsSold} tickets sold</p>
+                    <p className="font-semibold">{event.attendees} tickets sold</p>
                     <p className="text-sm text-green-600">${event.earnings.toLocaleString()} earned</p>
                   </div>
                 </div>

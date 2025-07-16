@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,56 +12,33 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const ManageEvents = () => {
-  const [events, setEvents] = useState([
-    {
-      id: '1',
-      title: 'Summer Music Festival',
-      date: '2024-08-15',
-      time: '7:00 PM',
-      location: 'Central Park, New York',
-      price: 75,
-      attendees: 250,
-      maxAttendees: 500,
-      status: 'active',
-      earnings: 18750,
-      image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: '2',
-      title: 'Tech Conference 2024',
-      date: '2024-09-20',
-      time: '9:00 AM',
-      location: 'Convention Center, San Francisco',
-      price: 50,
-      attendees: 180,
-      maxAttendees: 300,
-      status: 'active',
-      earnings: 9000,
-      image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=300&q=80'
-    },
-    {
-      id: '3',
-      title: 'Food & Wine Expo',
-      date: '2024-07-10',
-      time: '6:00 PM',
-      location: 'Downtown Hotel, Chicago',
-      price: 40,
-      attendees: 320,
-      maxAttendees: 320,
-      status: 'sold-out',
-      earnings: 12800,
-      image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=300&q=80'
-    }
-  ]);
+  const navigate = useNavigate();
+  const { user, events, deleteEvent, getEventBookings } = useAuth();
+  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const [showBookingsDialog, setShowBookingsDialog] = useState(false);
 
-  const getStatusBadge = (status: string) => {
+  // Get organizer's events
+  const organizerEvents = events.filter(event => event.organizerId === user?.id);
+
+  const getStatusBadge = (status: string, attendees: number, maxAttendees: number) => {
+    if (attendees >= maxAttendees) {
+      return <Badge className="bg-orange-100 text-orange-800">Sold Out</Badge>;
+    }
+    
     switch (status) {
       case 'active':
         return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case 'sold-out':
-        return <Badge className="bg-orange-100 text-orange-800">Sold Out</Badge>;
       case 'cancelled':
         return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>;
       default:
@@ -70,8 +47,22 @@ const ManageEvents = () => {
   };
 
   const handleDeleteEvent = (eventId: string) => {
-    setEvents(events.filter(event => event.id !== eventId));
+    if (window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+      deleteEvent(eventId);
+      toast.success('Event deleted successfully');
+    }
   };
+
+  const handleViewEvent = (eventId: string) => {
+    navigate(`/event/${eventId}`);
+  };
+
+  const handleViewBookings = (eventId: string) => {
+    setSelectedEvent(eventId);
+    setShowBookingsDialog(true);
+  };
+
+  const eventBookings = selectedEvent ? getEventBookings(selectedEvent) : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -88,7 +79,7 @@ const ManageEvents = () => {
         </div>
 
         <div className="grid gap-6">
-          {events.map((event) => (
+          {organizerEvents.map((event) => (
             <Card key={event.id} className="overflow-hidden">
               <CardContent className="p-6">
                 <div className="flex gap-6">
@@ -102,7 +93,7 @@ const ManageEvents = () => {
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-xl font-semibold">{event.title}</h3>
                       <div className="flex items-center gap-2">
-                        {getStatusBadge(event.status)}
+                        {getStatusBadge(event.status, event.attendees, event.maxAttendees)}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -110,17 +101,13 @@ const ManageEvents = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleViewEvent(event.id)}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Event
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit Event
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleViewBookings(event.id)}>
                               <Users className="mr-2 h-4 w-4" />
-                              View Bookings
+                              View Bookings ({event.attendees})
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-red-600"
@@ -159,7 +146,7 @@ const ManageEvents = () => {
           ))}
         </div>
 
-        {events.length === 0 && (
+        {organizerEvents.length === 0 && (
           <Card>
             <CardContent className="p-12 text-center">
               <h3 className="text-lg font-semibold mb-2">No events created yet</h3>
@@ -170,6 +157,39 @@ const ManageEvents = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Bookings Dialog */}
+        <Dialog open={showBookingsDialog} onOpenChange={setShowBookingsDialog}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Event Bookings</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {eventBookings.length > 0 ? (
+                <div className="space-y-3">
+                  {eventBookings.map((booking) => (
+                    <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-semibold">{booking.userName}</p>
+                        <p className="text-sm text-gray-600">
+                          Booked on {new Date(booking.bookingDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{booking.quantity} tickets</p>
+                        <p className="text-sm text-green-600">${booking.totalPaid}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No bookings yet for this event</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

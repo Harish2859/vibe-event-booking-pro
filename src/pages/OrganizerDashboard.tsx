@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { PlusCircle, Calendar, Users, DollarSign, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import ChatBot from '@/components/ChatBot';
 
 const OrganizerDashboard = () => {
   const { user, events, getOrganizerStats } = useAuth();
@@ -102,6 +103,9 @@ const OrganizerDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* ChatBot Component */}
+      <ChatBot />
     </div>
   );
 };

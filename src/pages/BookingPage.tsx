@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 const BookingPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated, addBooking } = useAuth();
+  const { isAuthenticated, user, addBooking } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +28,7 @@ const BookingPage = () => {
   };
 
   const handleBooking = async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       navigate('/login');
       return;
     }
@@ -51,7 +51,9 @@ const BookingPage = () => {
       bookingDate: new Date().toISOString().split('T')[0],
       status: 'confirmed' as const,
       image: event.image,
-      bookingId: `BK${Date.now().toString().slice(-6)}`
+      bookingId: `BK${Date.now().toString().slice(-6)}`,
+      userId: user.id,
+      userName: user.name
     };
 
     addBooking(newBooking);

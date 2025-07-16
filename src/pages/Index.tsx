@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { EventCard } from '@/components/EventCard';
@@ -195,8 +194,6 @@ const Index = () => {
               <EventCard
                 key={event.id}
                 event={event}
-                onWishlist={handleWishlist}
-                isWishlisted={wishlistedEvents.includes(event.id)}
               />
             ))}
           </div>

@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Calendar,
   MapPin,
@@ -16,14 +18,20 @@ import {
   Settings,
   Download,
   X,
-  Eye
+  Eye,
+  Edit
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const UserDashboard = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, bookings, wishlist, cancelBooking, toggleWishlist, updateProfile } = useAuth();
   const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: ''
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -31,65 +39,40 @@ const UserDashboard = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Mock data - in real app, fetch from API
-  const [bookings] = useState([
-    {
-      id: '1',
-      eventId: '1',
-      eventTitle: 'Summer Music Festival 2024',
-      eventDate: '2024-08-15',
-      eventTime: '18:00',
-      location: 'Central Park, New York',
-      ticketType: 'General Admission',
-      quantity: 2,
-      totalPaid: 178,
-      bookingDate: '2024-07-20',
-      status: 'confirmed',
-      image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300',
-      bookingId: 'BK001'
-    },
-    {
-      id: '2',
-      eventId: '2',
-      eventTitle: 'Tech Innovation Conference',
-      eventDate: '2024-08-20',
-      eventTime: '09:00',
-      location: 'Convention Center, San Francisco',
-      ticketType: 'VIP Pass',
-      quantity: 1,
-      totalPaid: 199,
-      bookingDate: '2024-07-18',
-      status: 'confirmed',
-      image: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=300',
-      bookingId: 'BK002'
+  useEffect(() => {
+    if (user) {
+      setEditForm({
+        name: user.name,
+        email: user.email
+      });
     }
-  ]);
-
-  const [wishlist] = useState([
-    {
-      id: '3',
-      title: 'Comedy Night Special',
-      date: '2024-08-12',
-      location: 'Comedy Club Downtown',
-      price: 45,
-      image: 'https://images.unsplash.com/photo-1527224538127-2104bb71c51b?w=300'
-    },
-    {
-      id: '4',
-      title: 'Art Gallery Opening',
-      date: '2024-08-18',
-      location: 'Modern Art Gallery',
-      price: 25,
-      image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=300'
-    }
-  ]);
+  }, [user]);
 
   const handleCancelBooking = (bookingId: string) => {
+    cancelBooking(bookingId);
     toast.success('Booking cancelled successfully');
   };
 
   const handleDownloadTicket = (bookingId: string) => {
+    console.log('Downloading ticket PDF...');
     toast.success('Ticket downloaded');
+  };
+
+  const handleWishlistRemove = (eventId: string) => {
+    const eventToRemove = wishlist.find(item => item.id === eventId);
+    if (eventToRemove) {
+      toggleWishlist(eventToRemove);
+      toast.success('Event removed from wishlist');
+    }
+  };
+
+  const handleSaveProfile = () => {
+    updateProfile({
+      name: editForm.name,
+      email: editForm.email
+    });
+    setIsEditing(false);
+    toast.success('Profile updated successfully');
   };
 
   const formatDate = (dateStr: string) => {
@@ -303,7 +286,11 @@ const UserDashboard = () => {
                         <Button asChild size="sm" className="flex-1">
                           <Link to={`/event/${event.id}`}>View Details</Link>
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleWishlistRemove(event.id)}
+                        >
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
@@ -342,25 +329,56 @@ const UserDashboard = () => {
                   <Button variant="outline">Change Photo</Button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Full Name</label>
-                    <p className="mt-1 text-gray-900">{user.name}</p>
+                {isEditing ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input
+                        id="name"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button onClick={handleSaveProfile}>Save Changes</Button>
+                      <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                    </div>
                   </div>
+                ) : (
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Email</label>
-                    <p className="mt-1 text-gray-900">{user.email}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Full Name</label>
+                        <p className="mt-1 text-gray-900">{user.name}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Email</label>
+                        <p className="mt-1 text-gray-900">{user.email}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Account Type</label>
+                        <p className="mt-1 text-gray-900 capitalize">{user.role}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex space-x-4 mt-6">
+                      <Button onClick={() => setIsEditing(true)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Profile
+                      </Button>
+                      <Button variant="outline">Change Password</Button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Account Type</label>
-                    <p className="mt-1 text-gray-900 capitalize">{user.role}</p>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-4">
-                  <Button>Edit Profile</Button>
-                  <Button variant="outline">Change Password</Button>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

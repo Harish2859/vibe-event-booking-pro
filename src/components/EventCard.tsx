@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Users, Heart } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Event {
   id: string;
@@ -22,17 +24,36 @@ interface Event {
 
 interface EventCardProps {
   event: Event;
-  onWishlist?: (eventId: string) => void;
-  isWishlisted?: boolean;
 }
 
-export const EventCard = ({ event, onWishlist, isWishlisted }: EventCardProps) => {
+export const EventCard = ({ event }: EventCardProps) => {
+  const { isAuthenticated, toggleWishlist, isInWishlist } = useAuth();
+  const inWishlist = isInWishlist(event.id);
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  const handleWishlistToggle = () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to add events to wishlist');
+      return;
+    }
+
+    toggleWishlist({
+      id: event.id,
+      title: event.title,
+      date: event.date,
+      location: event.location,
+      price: event.price,
+      image: event.image
+    });
+
+    toast.success(inWishlist ? 'Removed from wishlist' : 'Added to wishlist');
   };
 
   return (
@@ -48,20 +69,18 @@ export const EventCard = ({ event, onWishlist, isWishlisted }: EventCardProps) =
             {event.category}
           </Badge>
         </div>
-        {onWishlist && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-3 right-3 bg-white/90 hover:bg-white"
-            onClick={() => onWishlist(event.id)}
-          >
-            <Heart
-              className={`h-4 w-4 ${
-                isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'
-              }`}
-            />
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute top-3 right-3 bg-white/90 hover:bg-white"
+          onClick={handleWishlistToggle}
+        >
+          <Heart
+            className={`h-4 w-4 ${
+              inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600'
+            }`}
+          />
+        </Button>
         <div className="absolute bottom-3 left-3 bg-blue-600 text-white px-2 py-1 rounded text-sm font-semibold">
           ${event.price}
         </div>

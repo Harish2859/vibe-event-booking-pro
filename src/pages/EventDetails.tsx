@@ -23,12 +23,12 @@ import { toast } from 'sonner';
 const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { isAuthenticated, toggleWishlist, isInWishlist } = useAuth();
+  const isWishlisted = isInWishlist(id || '');
 
   // Mock event data - in real app, fetch from API
   const event = {
-    id: '1',
+    id: id || '1',
     title: 'Summer Music Festival 2024',
     description: 'Join us for an unforgettable night of music with top artists from around the world. This festival brings together diverse musical genres and creates an atmosphere of pure joy and celebration. Experience live performances, food trucks, art installations, and connect with fellow music lovers.',
     fullDescription: 'The Summer Music Festival 2024 is our biggest event yet, featuring over 20 artists across 3 stages. From indie rock to electronic dance music, jazz to hip-hop, there\'s something for everyone. The festival grounds will feature local food vendors, craft beer gardens, art installations from local artists, and interactive experiences. Come early to explore everything we have to offer!',
@@ -67,7 +67,16 @@ const EventDetails = () => {
       toast.error('Please log in to add events to wishlist');
       return;
     }
-    setIsWishlisted(!isWishlisted);
+    
+    toggleWishlist({
+      id: event.id,
+      title: event.title,
+      date: event.date,
+      location: event.location,
+      price: event.price,
+      image: event.image
+    });
+    
     toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist');
   };
 

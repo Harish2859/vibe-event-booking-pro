@@ -7,17 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Navbar } from '@/components/Navbar';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const BookingPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, addBooking } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(false);
 
   // Mock event data - in real app, fetch by id
   const event = {
-    id: id,
+    id: id || '1',
     title: 'Summer Music Festival',
     date: '2024-08-15',
     time: '7:00 PM',
@@ -33,10 +34,34 @@ const BookingPage = () => {
     }
 
     setLoading(true);
+    
     // Simulate booking process
     await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const newBooking = {
+      id: Date.now().toString(),
+      eventId: event.id,
+      eventTitle: event.title,
+      eventDate: event.date,
+      eventTime: event.time,
+      location: event.location,
+      ticketType: 'General Admission',
+      quantity,
+      totalPaid: (event.price * quantity) + 5,
+      bookingDate: new Date().toISOString().split('T')[0],
+      status: 'confirmed' as const,
+      image: event.image,
+      bookingId: `BK${Date.now().toString().slice(-6)}`
+    };
+
+    addBooking(newBooking);
     setLoading(false);
-    navigate('/dashboard');
+    
+    toast.success('Booking confirmed! Redirecting to your dashboard...');
+    
+    setTimeout(() => {
+      navigate('/dashboard');
+    }, 1500);
   };
 
   const total = event.price * quantity;

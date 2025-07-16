@@ -9,12 +9,44 @@ interface User {
   avatar?: string;
 }
 
+interface Booking {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  eventDate: string;
+  eventTime: string;
+  location: string;
+  ticketType: string;
+  quantity: number;
+  totalPaid: number;
+  bookingDate: string;
+  status: 'confirmed' | 'cancelled';
+  image: string;
+  bookingId: string;
+}
+
+interface WishlistItem {
+  id: string;
+  title: string;
+  date: string;
+  location: string;
+  price: number;
+  image: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  bookings: Booking[];
+  wishlist: WishlistItem[];
   login: (email: string, password: string, role: 'user' | 'organizer') => Promise<void>;
   signup: (name: string, email: string, password: string, role: 'user' | 'organizer') => Promise<void>;
   logout: () => void;
+  updateProfile: (updates: Partial<User>) => void;
+  addBooking: (booking: Booking) => void;
+  cancelBooking: (bookingId: string) => void;
+  toggleWishlist: (event: WishlistItem) => void;
+  isInWishlist: (eventId: string) => boolean;
   loading: boolean;
 }
 
@@ -30,13 +62,24 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check for stored user session
     const storedUser = localStorage.getItem('eventBookingUser');
+    const storedBookings = localStorage.getItem('eventBookings');
+    const storedWishlist = localStorage.getItem('eventWishlist');
+    
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+    }
+    if (storedBookings) {
+      setBookings(JSON.parse(storedBookings));
+    }
+    if (storedWishlist) {
+      setWishlist(JSON.parse(storedWishlist));
     }
     setLoading(false);
   }, []);
@@ -79,15 +122,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setUser(null);
+    setBookings([]);
+    setWishlist([]);
     localStorage.removeItem('eventBookingUser');
+    localStorage.removeItem('eventBookings');
+    localStorage.removeItem('eventWishlist');
+  };
+
+  const updateProfile = (updates: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      localStorage.setItem('eventBookingUser', JSON.stringify(updatedUser));
+    }
+  };
+
+  const addBooking = (booking: Booking) => {
+    const newBookings = [...bookings, booking];
+    setBookings(newBookings);
+    localStorage.setItem('eventBookings', JSON.stringify(newBookings));
+  };
+
+  const cancelBooking = (bookingId: string) => {
+    const updatedBookings = bookings.filter(booking => booking.id !== bookingId);
+    setBookings(updatedBookings);
+    localStorage.setItem('eventBookings', JSON.stringify(updatedBookings));
+  };
+
+  const toggleWishlist = (event: WishlistItem) => {
+    const isAlreadyInWishlist = wishlist.some(item => item.id === event.id);
+    let updatedWishlist;
+    
+    if (isAlreadyInWishlist) {
+      updatedWishlist = wishlist.filter(item => item.id !== event.id);
+    } else {
+      updatedWishlist = [...wishlist, event];
+    }
+    
+    setWishlist(updatedWishlist);
+    localStorage.setItem('eventWishlist', JSON.stringify(updatedWishlist));
+  };
+
+  const isInWishlist = (eventId: string) => {
+    return wishlist.some(item => item.id === eventId);
   };
 
   const value = {
     user,
     isAuthenticated: !!user,
+    bookings,
+    wishlist,
     login,
     signup,
     logout,
+    updateProfile,
+    addBooking,
+    cancelBooking,
+    toggleWishlist,
+    isInWishlist,
     loading
   };
 

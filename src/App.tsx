@@ -16,6 +16,7 @@ import CreateEvent from "./pages/CreateEvent";
 import ManageEvents from "./pages/ManageEvents";
 import ViewTicket from "./pages/ViewTicket";
 import NotFound from "./pages/NotFound";
+import ChatBot from "@/components/ChatBot";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/ticket/:id" element={<ViewTicket />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <ChatBot />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

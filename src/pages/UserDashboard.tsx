@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Navbar } from '@/components/Navbar';
-import ChatBot from '@/components/ChatBot';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Calendar, MapPin, Clock, Ticket, Heart, User, Mail, Edit3, Save, X } from 'lucide-react';
@@ -325,7 +325,7 @@ const UserDashboard = () => {
         </Tabs>
       </div>
       
-      <ChatBot />
+      
     </div>
   );
 };

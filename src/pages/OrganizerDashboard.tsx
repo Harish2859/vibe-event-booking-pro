@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Navbar } from '@/components/Navbar';
-import ChatBot from '@/components/ChatBot';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -372,7 +372,7 @@ const OrganizerDashboard = () => {
         </Tabs>
       </div>
       
-      <ChatBot />
+      
     </div>
   );
 };
